@@ -18,11 +18,18 @@ app.use(cors({
 
 const Authenticate = (req,res,next) => {
     if (req.headers.authorization) {
-        next()
+        try {
+            const decode = jwt.verify(req.headers.authorization, process.env.SECRET);
+            if(decode){
+                next()
+            }
+        } catch (error) {
+            res.status(401).json({message:"UnAuthorized"})
+        }
     } else {
         res.status(401).json({message:"UnAuthorized"})
     }
-}
+};
 
 app.get('/',Authenticate, function(req,res){
     res.send("Welcome to Password Reset Flow")
@@ -122,7 +129,7 @@ app.post('/login',async function(req,res){
         if (user) {
             const compare = await bcrypt.compare(req.body.password,user.password);
             if (compare) {
-                const token = jwt.sign({_id:user._id},"asdfghjkl",{expiresIn:"10m"})
+                const token = jwt.sign({_id:user._id},process.env.SECRET,{expiresIn:"10m"})
             } else {
                 res.json({message:"Enter correct Email/Password"})
             }
