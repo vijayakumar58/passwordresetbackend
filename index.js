@@ -5,6 +5,7 @@ const mongodb = require("mongodb");
 const mongoClient = mongodb.MongoClient;
 const dotenv = require("dotenv").config();
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 const URL = process.env.DB;
 const DB = "passwordresetflow"
 app.listen(process.env.PORT || 3000);
@@ -15,7 +16,15 @@ app.use(cors({
     origin : "*"
 }))
 
-app.get('/', function(req,res){
+const Authenticate = (req,res,next) => {
+    if (req.headers.authorization) {
+        next()
+    } else {
+        res.status(401).json({message:"UnAuthorized"})
+    }
+}
+
+app.get('/',Authenticate, function(req,res){
     res.send("Welcome to Password Reset Flow")
 })
 
@@ -113,12 +122,12 @@ app.post('/login',async function(req,res){
         if (user) {
             const compare = await bcrypt.compare(req.body.password,user.password);
             if (compare) {
-                res.json({message:"logged in successfully"})
+                const token = jwt.sign({_id:user._id},"asdfghjkl",{expiresIn:"10m"})
             } else {
-                res.json({message:"Enter correct Password"})
+                res.json({message:"Enter correct Email/Password"})
             }
         } else {
-            res.status(401).json({message:"Enter correct Username"})
+            res.status(401).json({message:"Enter correct Email/password"})
         }
         await connection.close();
     } catch (error) {
