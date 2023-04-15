@@ -4,6 +4,7 @@ const app = express();
 const mongodb = require("mongodb");
 const mongoClient = mongodb.MongoClient;
 const dotenv = require("dotenv").config();
+const bcrypt = require("bcryptjs");
 const URL = process.env.DB;
 const DB = "passwordresetflow"
 app.listen(process.env.PORT || 3000);
@@ -14,8 +15,8 @@ app.use(cors({
     origin : "*"
 }))
 
-app.get('/home', function(req,res){
-    res.send("Welcome to Full-Stack Demo")
+app.get('/', function(req,res){
+    res.send("Welcome to Password Reset Flow")
 })
 
 //create user
@@ -80,6 +81,46 @@ app.delete('/user/:id',async function(req,res){
         const user = await db.collection('users').findOneAndDelete({ _id: new mongodb.ObjectId(req.params.id)});
         await connection.close();
         res.json(user);
+    } catch (error) {
+        res.status(500).json({message:"Something Went Wrong"})
+    }
+})
+
+//create registerui
+app.post('/createregister',async function(req,res){
+    try{
+        const connection = await mongoClient.connect(URL);
+        const db = connection.db(DB);
+
+        const salt = await bcrypt.genSalt(10);
+        const hash = await bcrypt.hash(req.body.password,salt);
+        req.body.password = hash;
+        await db.collection('registerui').insertOne(req.body);
+        await connection.close();
+        res.json({message:"registerui insert successfully"})
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({message:"something went wrong"});
+    }
+})
+
+//login 
+app.post('/login',async function(req,res){
+    try {
+        const connection = await mongoClient.connect(URL);
+        const db = connection.db(DB);
+        const user = await db.collection('registerui').findOne({email:req.body.email});
+        if (user) {
+            const compare = await bcrypt.compare(req.body.password,user.password);
+            if (compare) {
+                res.json({message:"logged in successfully"})
+            } else {
+                res.json({message:"Enter correct Password"})
+            }
+        } else {
+            res.status(401).json({message:"Enter correct Username"})
+        }
+        await connection.close();
     } catch (error) {
         res.status(500).json({message:"Something Went Wrong"})
     }
