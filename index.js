@@ -29,7 +29,7 @@ app.get('/',Authenticate, function(req,res){
 })
 
 //create user
-app.post('/user',async function(req,res){
+app.post('/user',Authenticate, async function(req,res){
     try {
         const connection = await mongoClient.connect(URL);
         const db = connection.db(DB);
@@ -43,7 +43,7 @@ app.post('/user',async function(req,res){
 })
 
 //get users
-app.get('/users', async function(req,res){
+app.get('/users',Authenticate, async function(req,res){
     try {
         const connection = await mongoClient.connect(URL);
         const db = connection.db(DB);
@@ -57,7 +57,7 @@ app.get('/users', async function(req,res){
 })
 
 //view user
-app.get('/user/:id', async function(req,res){
+app.get('/user/:id',Authenticate, async function(req,res){
     try {
         const connection = await mongoClient.connect(URL);
         const db = connection.db(DB);
@@ -70,7 +70,7 @@ app.get('/user/:id', async function(req,res){
 })
 
 //Edit user
-app.put('/user/:id', async function(req,res){
+app.put('/user/:id',Authenticate, async function(req,res){
     try {
         const connection = await mongoClient.connect(URL);
         const db = connection.db(DB);
@@ -83,7 +83,7 @@ app.put('/user/:id', async function(req,res){
 })
 
 //Delete user
-app.delete('/user/:id',async function(req,res){
+app.delete('/user/:id',Authenticate, async function(req,res){
     try {
         const connection = await mongoClient.connect(URL);
         const db = connection.db(DB);
