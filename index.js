@@ -16,44 +16,44 @@ app.listen(process.env.PORT || 3000);
 //middleware
 app.use(express.json());
 app.use(cors({
-    origin : "http://localhost:3001"
+    origin: "http://localhost:3001"
 }))
 
-const Authenticate = (req,res,next) => {
+const Authenticate = (req, res, next) => {
     if (req.headers.authorization) {
         try {
             const decode = jwt.verify(req.headers.authorization, process.env.SECRET);
-            if(decode){
+            if (decode) {
                 next()
             }
         } catch (error) {
-            res.status(401).json({message:"UnAuthorized"})
+            res.status(401).json({ message: "UnAuthorized" })
         }
     } else {
-        res.status(401).json({message:"UnAuthorized"})
+        res.status(401).json({ message: "UnAuthorized" })
     }
 };
 
-app.get('/', function(req,res){
+app.get('/', function (req, res) {
     res.send("Welcome to Password Reset Flow")
 })
 
 //create user
-app.post('/user',Authenticate, async function(req,res){
+app.post('/user', Authenticate, async function (req, res) {
     try {
         const connection = await mongoClient.connect(URL);
         const db = connection.db(DB);
         await db.collection('users').insertOne(req.body);
         await connection.close();
-        res.json({message:"User Data Insert"})
+        res.json({ message: "User Data Insert" })
     } catch (error) {
         console.log(error)
-        res.status(500).json({message:"Something Went Wrong"})
+        res.status(500).json({ message: "Something Went Wrong" })
     }
 })
 
 //get users
-app.get('/users',Authenticate, async function(req,res){
+app.get('/users', Authenticate, async function (req, res) {
     try {
         const connection = await mongoClient.connect(URL);
         const db = connection.db(DB);
@@ -62,12 +62,12 @@ app.get('/users',Authenticate, async function(req,res){
         res.json(resUser);
     } catch (error) {
         console.log(error);
-        res.status(500).json({message:"Something Went Wrong"})
+        res.status(500).json({ message: "Something Went Wrong" })
     }
 })
 
 //view user
-app.get('/user/:id',Authenticate, async function(req,res){
+app.get('/user/:id', Authenticate, async function (req, res) {
     try {
         const connection = await mongoClient.connect(URL);
         const db = connection.db(DB);
@@ -75,57 +75,57 @@ app.get('/user/:id',Authenticate, async function(req,res){
         await connection.close();
         res.json(user);
     } catch (error) {
-        res.status(500).json({message:"Something Went Wrong"})
+        res.status(500).json({ message: "Something Went Wrong" })
     }
 })
 
 //Edit user
-app.put('/user/:id',Authenticate, async function(req,res){
+app.put('/user/:id', Authenticate, async function (req, res) {
     try {
         const connection = await mongoClient.connect(URL);
         const db = connection.db(DB);
-        const view = await db.collection('users').findOneAndUpdate({_id: new mongodb.ObjectId(req.params.id)},{$set:req.body});
+        const view = await db.collection('users').findOneAndUpdate({ _id: new mongodb.ObjectId(req.params.id) }, { $set: req.body });
         await connection.close();
         res.json(view);
     } catch (error) {
-        res.status(500).json({message:"Something Went Wrong"})
+        res.status(500).json({ message: "Something Went Wrong" })
     }
 })
 
 //Delete user
-app.delete('/user/:id',Authenticate, async function(req,res){
+app.delete('/user/:id', Authenticate, async function (req, res) {
     try {
         const connection = await mongoClient.connect(URL);
         const db = connection.db(DB);
-        const user = await db.collection('users').findOneAndDelete({ _id: new mongodb.ObjectId(req.params.id)});
+        const user = await db.collection('users').findOneAndDelete({ _id: new mongodb.ObjectId(req.params.id) });
         await connection.close();
         res.json(user);
     } catch (error) {
-        res.status(500).json({message:"Something Went Wrong"})
+        res.status(500).json({ message: "Something Went Wrong" })
     }
 })
 
 //create registerui
-app.post('/createregister',async function(req,res){
-    try{
+app.post('/createregister', async function (req, res) {
+    try {
         const connection = await mongoClient.connect(URL);
         const db = connection.db(DB);
 
         const salt = await bcrypt.genSalt(10);
-        const hash = await bcrypt.hash(req.body.password,salt);
+        const hash = await bcrypt.hash(req.body.password, salt);
         req.body.password = hash;
         req.body.repeatpassword = hash;
         await db.collection('registerui').insertOne(req.body);
         await connection.close();
-        res.json({message:"registerui insert successfully"})
+        res.json({ message: "registerui insert successfully" })
     } catch (error) {
         console.log(error)
-        res.status(500).json({message:"something went wrong"});
+        res.status(500).json({ message: "something went wrong" });
     }
 })
 
 //login 
-app.post('/login',async function(req,res){
+app.post('/login', async function (req, res) {
     try {
         const connection = await mongoClient.connect(URL);
         const db = connection.db(DB);
@@ -133,20 +133,20 @@ app.post('/login',async function(req,res){
         if (user) {
             const compare = await bcrypt.compare(req.body.password, user.password);
             if (compare) {
-                const token = jwt.sign({_id: user._id},process.env.SECRET,{expiresIn:"10m"})
-                res.json({token})
+                const token = jwt.sign({ _id: user._id }, process.env.SECRET, { expiresIn: "10m" })
+                res.json({ token })
             } else {
                 console.log(error)
-                res.json({message:"Enter correct Password"})
+                res.json({ message: "Enter correct Password" })
             }
         } else {
             console.log(error)
-            res.status(401).json({message:"Enter correct Email"})
+            res.status(401).json({ message: "Enter correct Email" })
         }
         await connection.close();
     } catch (error) {
         console.log(error)
-        res.status(500).json({message:"Something Went Wrong"})
+        res.status(500).json({ message: "Something Went Wrong" })
     }
 })
 
@@ -162,76 +162,80 @@ const transporter = nodemailer.createTransport({
 });
 
 //Forgot password & email verification
-app.post('/ForgotPassword', async function (req,res){
+app.post('/ForgotPassword', async function (req, res) {
     try {
         const connection = await mongoClient.connect(URL);
         const db = connection.db(DB);
-        const user = await db.collection('registerui').findOne({email: req.body.email})
-        // console.log(user);
-        const token = jwt.sign({_id: user._id},process.env.SECRET,{expiresIn:"5m"})
-        // console.log(token);
-        const usertoken = await db.collection('registerui').findOneAndUpdate({_id:new mongodb.ObjectId(req.params.id)},{$set : {verifytoken:token}},{ returnOriginal: false })
-        // const usertoken = await db.collection('registerui').findByIdAndUpdate({_id: user._id},{verifytoken:token},{ new: true })
-        // console.log(usertoken);
-        if (usertoken) {
+        const user = await db.collection('registerui').findOne({ email: req.body.email })
+        if (user) {
+            const token = jwt.sign({ _id: user._id }, process.env.SECRET, { expiresIn: "5m" })
+            await db.collection('registerui').updateOne({ _id: user._id }, { $set: { verifytoken: token } })
+
             const mailOption = {
                 from: semail,
-                to:`${user.email}`,
-                subject:"Send Email For Password Reset",
-                text:`only 5min Valuable http://localhost:3001/Resetpassword/${user._id}/${token}`
+                to: `${user.email}`,
+                subject: "Send Email For Password Reset",
+                text: `This link is valid for 5 minutes: http://localhost:3001/Resetpassword/${user._id}/${token}`
             }
 
-            await transporter.sendMail(mailOption,(error,info)=>{
+            await transporter.sendMail(mailOption, (error, info) => {
                 if (error) {
-                    console.log("Error : ",error);
-                    res.status(401).json({message:"Email Not Send"})
+                    console.log("Error : ", error);
+                    return res.status(401).json({ message: "Email Not Send" })
                 } else {
-                    console.log("Email sent : ",info.response);
-                    res.status(201).json({message:"Email has been send successfully"})
+                    console.log("Email sent : ", info.response);
+                    return res.status(201).json({ message: "Email has been send successfully" })
                 }
             });
         } else {
-            res.json({message:"Enter the propper Email"})
+            res.status(401).json({ message: "User not found" })
         }
         await connection.close()
     } catch (error) {
-        res.status(401).json({message:"Enter the Valid Email"})
+        console.log(error);
+        res.status(500).json({ message: "Something went wrong" })
     }
-}
-)
+})
 
 //Verify user for forgot password Time
-app.get('/Resetpassword/:id/:token', async (req,res)=>{
+app.get('/Resetpassword/:id/:token', async (req, res) => {
     try {
         const connection = await mongoClient.connect(URL);
         const db = connection.db(DB);
-        const validuser = await db.collection('registerui').findOne({_id:new mongodb.ObjectId(req.params.id)},{verifytoken:token})
-        const verifytoken = jwt.verify(token,process.env.SECRET)
-        console.log(verifytoken);
-        if (validuser && verifytoken._id) {
-            res.status(201).json({status:201, validuser})
+        const verifytoken = jwt.verify(req.params.token, process.env.SECRET)
+        const validuser = await db.collection('registerui').findOne({ _id: new mongodb.ObjectId(req.params.id), verifytoken: req.params.token })
+
+        if (validuser && verifytoken._id == req.params.id) {
+            res.status(201).json({ status: 201, validuser })
         } else {
-            res.status(401).json({ status:401,message:"user not Exist"})
+            res.status(401).json({ status: 401, message: "User not found or token mismatch" })
         }
         await connection.close()
     } catch (error) {
-        res.status(401).json({status:401,error})
+        console.log("Verify Error:", error.message);
+        res.status(401).json({ status: 401, message: "Token Expired or Invalid", error: error.message })
     }
 })
 
 //New password update
-app.put('/:id/:token', async function(){
-    const connection = await mongoClient.connect(URL);
-    const db = connection.db(DB);
-    const validuser = await db.collection('registerui').findOne({_id:new mongodb.ObjectId(req.params.id)},{verifytoken:token});
-    const verifytoken = jwt.verify(token,process.env.SECRET)
-    console.log(verifytoken);
-    if (validuser && verifytoken._id) {
-        const salt = await bcrypt.genSalt(10);
-        const hash = await bcrypt.hash(req.body.newpassword,salt);
-        req.body.newpassword = hash;
-        const setnewpassword = await db.collection('register').findByIdAndUpdate({_id:new mongodb.ObjectId(req.params.id)},{password:newpassword},{$set:req.body})
-    } else {
-        
+app.put('/Resetpassword/:id/:token', async function (req, res) {
+    try {
+        const connection = await mongoClient.connect(URL);
+        const db = connection.db(DB);
+        const verifytoken = jwt.verify(req.params.token, process.env.SECRET)
+        const validuser = await db.collection('registerui').findOne({ _id: new mongodb.ObjectId(req.params.id), verifytoken: req.params.token });
+
+        if (validuser && verifytoken._id == req.params.id) {
+            const salt = await bcrypt.genSalt(10);
+            const hash = await bcrypt.hash(req.body.password, salt);
+            await db.collection('registerui').updateOne({ _id: new mongodb.ObjectId(req.params.id) }, { $set: { password: hash, verifytoken: "" } })
+            res.status(201).json({ message: "Password updated successfully" })
+        } else {
+            res.status(401).json({ message: "User identity mismatch or token invalid" })
+        }
+        await connection.close()
+    } catch (error) {
+        console.log("Update Error:", error.message);
+        res.status(401).json({ message: "Token Expired or Invalid", error: error.message })
     }
 })
