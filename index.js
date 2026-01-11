@@ -176,7 +176,8 @@ app.post('/ForgotPassword', async function (req, res) {
                 from: semail,
                 to: `${user.email}`,
                 subject: "Send Email For Password Reset",
-                text: `This link is valid for 5 minutes: http://localhost:3001/Resetpassword/${user._id}/${token}`
+                text: `This link is valid for 5 minutes: https://passwordreset-email.netlify.app/Resetpassword/${user._id}/${token}`
+                // text: `This link is valid for 5 minutes: http://localhost:3001/Resetpassword/${user._id}/${token}`
             }
 
             await transporter.sendMail(mailOption, (error, info) => {
